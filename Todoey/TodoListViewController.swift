@@ -10,11 +10,14 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
     
-    var itemArray = ["Find Mike", "Buy Eggos", "Destroy Demogorgon"]
+    let defaults = UserDefaults.standard
+    var itemArray = [String]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+        if let items = defaults.array(forKey: "TodoListArray") as? [String] {
+            itemArray = items
+        }
     }
     
     //MARK: Tableview Datasource Methods
@@ -47,12 +50,17 @@ class TodoListViewController: UITableViewController {
     //MARK: Add Item to List
     @IBAction func addButtonTapped(_ sender: UIBarButtonItem) {
         
+        var textField = UITextField()   //Capture text field from UIAlert
+        
         let alert = UIAlertController(title: "Add New Item", message: "Add new item to ToDo List", preferredStyle: .alert)
         
         let addAction = UIAlertAction(title: "Add", style: .default) { (action) in
-            if let text = alert.textFields?.first?.text {
-                self.itemArray.append(text)
+            
+            if let newItem = textField.text {
+                self.itemArray.append(newItem)
+                self.defaults.set(self.itemArray, forKey: "TodoListArray")
             }
+            
             self.tableView.reloadData()
             self.dismiss(animated: true, completion: nil)
         }
@@ -61,7 +69,10 @@ class TodoListViewController: UITableViewController {
             self.dismiss(animated: true, completion: nil)
         }
         
-        alert.addTextField()
+        alert.addTextField { (alertTextField) in
+            alertTextField.placeholder = "New Todoey item..."
+            textField = alertTextField      //To get text to larger scope
+        }
         alert.addAction(addAction)
         alert.addAction(cancelAction)
         
