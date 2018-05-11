@@ -10,14 +10,12 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
     
-    let defaults = UserDefaults.standard
     var itemArray = [TodoListItem]()
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        if let items = defaults.array(forKey: "TodoList") as? [TodoListItem] {
-            itemArray = items
-        }
+        itemArray = loadItems()
     }
     
     //MARK: Tableview Datasource Methods
@@ -44,6 +42,7 @@ class TodoListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        saveItems()
         
         tableView.reloadData()
         
@@ -65,7 +64,8 @@ class TodoListViewController: UITableViewController {
             if let newTitle = textField.text {
                 newItem.title = newTitle
                 self.itemArray.append(newItem)
-                //self.defaults.set(self.itemArray, forKey: "TodoList")
+            
+                self.saveItems()
             }
             
             self.tableView.reloadData()
@@ -84,6 +84,33 @@ class TodoListViewController: UITableViewController {
         alert.addAction(cancelAction)
         
         present(alert, animated: true, completion: nil)
+    }
+    
+    //MARK: Decoding/Encoding Data for Storage
+    func loadItems() -> [TodoListItem] {
+        let decoder = PropertyListDecoder()
+        
+        do {
+            if let data = try? Data(contentsOf: dataFilePath!) {
+                let itemList = try decoder.decode([TodoListItem].self, from: data)
+                return itemList
+            }
+            
+        } catch {
+            print("Error decoding... \(error)")
+        }
+        return []
+    }
+    
+    func saveItems() {
+        let encoder = PropertyListEncoder()
+        
+        do {
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+        } catch {
+            print("Error encoding item array, \(error)")
+        }
     }
     
 }
